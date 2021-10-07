@@ -16,8 +16,6 @@ public class Game implements Serializable {
     private static final int DELAY_INTRIGUE = 3_000;
     private static final int DELAY_AFTER_QUESTION_RESULT = 3_000;
 
-
-
     private final ArrayList<Question> allQuestions;
     private ArrayList<Question> actualQuestions;
     private Question currentQuestion;
@@ -60,8 +58,8 @@ public class Game implements Serializable {
         return actualQuestions.size();
     }
 
-    public int getNumAnswer() {
-        return round.getStep();
+    public int getNumQuestion() {
+        return round.getStep() + 1;
     }
 
     public int getWin() {
@@ -72,7 +70,6 @@ public class Game implements Serializable {
         reset();
         nextQuestion();
     }
-
 
     private void wrongAnswer() {
         if (onEndGameListener != null) {
@@ -139,17 +136,22 @@ public class Game implements Serializable {
         this.onEndGameListener = onEndGameListener;
     }
 
+
+    public static boolean checkIrreparableAmount(int num) {
+        return Round.checkIrreparableAmount(num);
+    }
+
     int random(int max) {
         return (int) (Math.random() * max);
     }
 
     //РАУНД
     private static class Round {
-        private final int[] BETS = {100, 200, 300, 500, 1000,
+        private final static int[] BETS = {100, 200, 300, 500, 1000,
                 2_000, 4_000, 8_000, 16_000, 32_000,
                 64_000, 125_000, 255_000, 500_000, 1000_000};
 
-        private final int[] IRREPARABLE_AMOUNTS = {1000, 32_000, 1000_000};
+        private final static int[] IRREPARABLE_AMOUNTS = {1000, 32_000, 1000_000};
         private int step;
 
         public Round() {
@@ -175,6 +177,15 @@ public class Game implements Serializable {
 
         public int getStep() {
             return step;
+        }
+
+        public static boolean  checkIrreparableAmount(int num) {
+            for (int amount : IRREPARABLE_AMOUNTS) {
+                if(amount == num) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         public int getWin() {

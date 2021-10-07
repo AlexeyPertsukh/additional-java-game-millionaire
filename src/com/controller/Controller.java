@@ -15,7 +15,7 @@ import java.util.Map;
 
 public class Controller implements IConst {
 
-    private static final String CONSOLE_CONTROLLER_VERSION = "1.1";
+    private static final String CONSOLE_CONTROLLER_VERSION = "1.2";
     private static final String FILE_LOCAL_PATCH = "\\src\\files\\";
 
     private static final int CMD_LOAD_FROM_SERVER = 1;
@@ -28,8 +28,7 @@ public class Controller implements IConst {
     private static final String COLOR_FAILED_ANSWER = Color.ANSI_RED;
 
     private final Display display;
-    private Question currentQuestion;
-    private Map<Character, String> map;
+    private final Map<Character, String> map;
     Game game;
 
     public Controller() {
@@ -64,14 +63,17 @@ public class Controller implements IConst {
     }
 
     private void endGame() {
-        display.printColor(COLOR_END_GAME, "Конец игры");
+        String text = String.format("Игра окончена. Ваш выигрыш: %d %s", game.getWin(), MONEY_SIGN);
+        display.printColor(COLOR_END_GAME, text);
     }
 
     private void showNewQuestion(Question question, int bet) {
-        currentQuestion = question;
         List<String> answers = question.getShuffledAllAnswers();
-
-        String stringBet = String.format("Вопрос: %d %s", bet, MONEY_SIGN);
+        String addInfo = "";
+        if(Game.checkIrreparableAmount(bet)) {
+            addInfo = "[несгораемая сумма]";
+        }
+        String stringBet = String.format("Вопрос(%d): %d %s %s", game.getNumQuestion(), bet, MONEY_SIGN, addInfo);
         display.printColor(COLOR_QUESTION, stringBet);
         display.printColor(COLOR_QUESTION, question.getStrQuestion());
         display.println("-----");
@@ -95,11 +97,11 @@ public class Controller implements IConst {
 
     private void printOnStart() {
         display.setColor(COLOR_HELP);
-        display.println("************************************************");
-        display.println("Who Wants to Be a Millionaire? (console) v." + CONSOLE_CONTROLLER_VERSION);
+        display.println("******************************************************");
+        display.println("Who Wants to Be a Millionaire? (console version) " + CONSOLE_CONTROLLER_VERSION);
         display.println("A01 JAVA 2020/21 IT-STEP, Zaporogue");
         display.println("Pertsukh Alexey");
-        display.println("************************************************");
+        display.println("******************************************************");
         display.println();
         display.resetColor();
     }
@@ -123,6 +125,7 @@ public class Controller implements IConst {
             strings = FileReader.read(fileName);
         } catch (IOException e) {
             e.printStackTrace();
+            display.printlRed("Failed read file: " + fileName);
         }
         return strings;
     }

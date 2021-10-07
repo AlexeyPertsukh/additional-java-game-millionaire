@@ -13,14 +13,14 @@ public class Color {
     public static final String ANSI_WHITE = "\u001B[37m";
 
     //BOLD
-    public static final String ANSI_BOLD_BLACK =    "\033[1;30m";  // BLACK
-    public static final String ANSI_BOLD_RED =      "\033[1;31m";    // RED
-    public static final String ANSI_BOLD_GREEN =    "\033[1;32m";  // GREEN
-    public static final String ANSI_BOLD_YELLOW =   "\033[1;33m"; // YELLOW
-    public static final String ANSI_BOLD_BLUE =     "\033[1;34m";   // BLUE
-    public static final String ANSI_BOLD_PURPLE =   "\033[1;35m"; // PURPLE
-    public static final String ANSI_BOLD_CYAN =     "\033[1;36m";   // CYAN
-    public static final String ANSI_BOLD_WHITE =    "\033[1;37m";  // WHITE
+    public static final String ANSI_BOLD_BLACK =    "\033[1;30m";
+    public static final String ANSI_BOLD_RED =      "\033[1;31m";
+    public static final String ANSI_BOLD_GREEN =    "\033[1;32m";
+    public static final String ANSI_BOLD_YELLOW =   "\033[1;33m";
+    public static final String ANSI_BOLD_BLUE =     "\033[1;34m";
+    public static final String ANSI_BOLD_PURPLE =   "\033[1;35m";
+    public static final String ANSI_BOLD_CYAN =     "\033[1;36m";
+    public static final String ANSI_BOLD_WHITE =    "\033[1;37m";
 
     //
     public static final String ANSI_BLACK_BACKGROUND = "\u001B[40m";
@@ -34,7 +34,6 @@ public class Color {
 
     //
     private Color(){
-
     }
 
 }
