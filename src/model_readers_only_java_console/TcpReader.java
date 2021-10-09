@@ -3,15 +3,17 @@ package model_readers_only_java_console;
 import constants.IConst;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.PrintWriter;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class TcpReader implements IConst {
-    private final Scanner scanner;
     private final String host;
     private final int port;
     private final int timeout;
@@ -19,7 +21,7 @@ public class TcpReader implements IConst {
     private Socket socket;
 
     public TcpReader(String host, int port, int timeout) {
-        this.scanner = new Scanner(System.in);
+        Scanner scanner = new Scanner(System.in);
         this.port = port;
         this.host= host;
         this.timeout = timeout;
@@ -43,10 +45,9 @@ public class TcpReader implements IConst {
         try {
             sendQuery();
             readServer();
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new TcpReaderException("read data failed");
         }
-
     }
 
     private void sendQuery() throws IOException {
@@ -56,15 +57,9 @@ public class TcpReader implements IConst {
         System.out.println("send to server: " + QUERY);
     }
 
-    private void readServer() throws IOException {
-        Scanner scanner = new Scanner(socket.getInputStream());
-        int i = 0;
-        while (scanner.hasNextLine()) {
-            strings.add(scanner.nextLine());
-            if (i++ >= 32) {
-                break;
-            }
-        }
+    private void readServer() throws IOException, ClassNotFoundException {
+        ObjectInputStream objectInput = new ObjectInputStream(socket.getInputStream());
+        strings = (ArrayList<String>)objectInput.readObject();
     }
 
     public ArrayList<String> getStrings() {

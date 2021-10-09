@@ -49,7 +49,6 @@ public class Controller implements IConst {
         } else {
             gameAction();
         }
-
     }
 
     private void gameAction() {
@@ -120,7 +119,7 @@ public class Controller implements IConst {
         display.setColor(COLOR_HELP);
         display.println("******************************************************");
         display.println("Who Wants to Be a Millionaire? (console version) " + CONSOLE_CONTROLLER_VERSION);
-        display.println("A01 JAVA 2020/21 IT-STEP, Zaporogue");
+        display.println("JAVA A01 2020/21 IT-STEP, Zaporozhye");
         display.println("Pertsukh Alexey");
         display.println("******************************************************");
         display.println();
