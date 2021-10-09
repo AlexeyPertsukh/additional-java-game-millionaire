@@ -5,14 +5,10 @@ import model_game.Game;
 import model_question.Question;
 import model_question.QuestionFabric;
 import model_question.QuestionFabricException;
-import model_readers_only_java_console.FileReader;
-import model_readers_only_java_console.FileReaderException;
-import model_readers_only_java_console.TcpReader;
-import model_readers_only_java_console.TcpReaderException;
+import model_readers_only_java_console.*;
 import view.Color;
 import view.Display;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -137,13 +133,14 @@ public class Controller implements IConst {
         int cmd = Util.nextInt(text, CMD_LOAD_FROM_SERVER, CMD_LOAD_FROM_CSV);
 
         //получение вопросов в виде списка строк разных типов(csv, json)
-        if(cmd == CMD_LOAD_FROM_CSV) {
-            strings = loadFromCsv();
-        } else if(cmd == CMD_LOAD_FROM_SERVER){
-            strings = loadFromTcp();
-        }
-
-        if(strings.size() == 0) {
+        try {
+            if(cmd == CMD_LOAD_FROM_CSV) {
+                strings = loadFromCsv();
+            } else if(cmd == CMD_LOAD_FROM_SERVER){
+                strings = loadFromTcp();
+            }
+        } catch (ReaderException ex) {
+            display.println(ex.getMessage());
             return false;
         }
 
@@ -155,7 +152,7 @@ public class Controller implements IConst {
                 questions = QuestionFabric.createFromJson(strings);
             }
         } catch (QuestionFabricException ex) {
-            display.println("failed crete questions list\n" + ex.getMessage());
+            display.println(ex.getMessage());
             return false;
         }
 
@@ -163,28 +160,17 @@ public class Controller implements IConst {
     }
 
     private ArrayList<String> loadFromCsv() {
-        ArrayList<String> strings = new ArrayList<>();
-
         String fileName = FileReader.getFilenameWithAbsolutePatch(FILE_LOCAL_PATCH, FILE_NAME_CSV_QUESTIONS);
-        try {
-            strings = FileReader.read(fileName);
-            display.println("loaded strings from file *.csv: " + strings.size());
-        } catch (FileReaderException ex) {
-            System.out.println(ex.getMessage());
-        }
+        ArrayList<String> strings = FileReader.read(fileName);
+        display.println("loaded strings from file *.csv: " + strings.size());
         return strings;
     }
 
     private ArrayList<String> loadFromTcp() {
-        ArrayList<String> strings = new ArrayList<>();
-        TcpReader tcpReader = new TcpReader(HOST ,PORT, TIMEOUT);
-        try {
-            tcpReader.run();        //здесь не используем TcpReader как поток- в консоли это не имеет смысла, просто вызываем run()
-            strings = tcpReader.getStrings();
-        } catch (TcpReaderException ex) {
-            System.out.println(ex.getMessage());
-        }
-
+        TcpReader tcpReader = new TcpReader(HOST, PORT, TIMEOUT);
+        tcpReader.read();
+        ArrayList<String> strings = tcpReader.getStrings();
+        display.println("loaded strings from server: " + strings.size());
         return strings;
     }
 

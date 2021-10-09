@@ -10,13 +10,12 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-public class TcpReader implements Runnable, IConst {
+public class TcpReader implements IConst {
     private final Scanner scanner;
     private final String host;
     private final int port;
     private final int timeout;
     private ArrayList<String> strings;
-    private OnEndReadListener onEndReadListener;
     private Socket socket;
 
     public TcpReader(String host, int port, int timeout) {
@@ -26,8 +25,7 @@ public class TcpReader implements Runnable, IConst {
         this.timeout = timeout;
     }
 
-    @Override
-    public void run() {
+    public void read() {
         strings = new ArrayList<>();
         try {
             String text = String.format("connecting to server: %s, port %d, timeout %d... ", host, port, timeout);
@@ -45,13 +43,8 @@ public class TcpReader implements Runnable, IConst {
         try {
             sendQuery();
             readServer();
-            System.out.println("loaded strings from server: " + strings.size());
         } catch (IOException e) {
             throw new TcpReaderException("read data failed");
-        }
-
-        if(onEndReadListener != null) {
-            onEndReadListener.action(strings);
         }
 
     }
@@ -78,12 +71,5 @@ public class TcpReader implements Runnable, IConst {
         return strings;
     }
 
-    public void setOnEndReadListener(OnEndReadListener onEndReadListener) {
-        this.onEndReadListener = onEndReadListener;
-    }
-
-    interface OnEndReadListener {
-        void action(ArrayList<String> strings);
-    }
 
 }

@@ -10,10 +10,9 @@ public class FileReader {
 
     public static ArrayList<String> read(String filename) {
         ArrayList<String> strings = new ArrayList<>();
-        java.io.FileReader fr = null;
 
         try {
-            fr = new java.io.FileReader(filename);
+            java.io.FileReader fr = new java.io.FileReader(filename);
             Scanner scan = new Scanner(fr);
             while (scan.hasNextLine()) {
                 strings.add(scan.nextLine());
