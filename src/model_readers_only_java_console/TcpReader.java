@@ -30,20 +30,24 @@ public class TcpReader implements Runnable, IConst {
     public void run() {
         strings = new ArrayList<>();
         try {
-            InetSocketAddress socketAddress = new InetSocketAddress(host, port);
-            String text = String.format("connecting to server: %s, port %d, timeout %d ... ", host, port, timeout);
+            String text = String.format("connecting to server: %s, port %d, timeout %d... ", host, port, timeout);
             System.out.println(text);
+
+            InetSocketAddress socketAddress = new InetSocketAddress(host, port);
 
             socket = new Socket();
             socket.connect(socketAddress, timeout);
             System.out.println("connected");
+        } catch (Exception ex) {
+            throw new TcpReaderException("connect failed");
+        }
 
+        try {
             sendQuery();
             readServer();
             System.out.println("loaded strings from server: " + strings.size());
-
-        } catch (Exception ex) {
-            System.out.println("connecting failed");
+        } catch (IOException e) {
+            throw new TcpReaderException("read data failed");
         }
 
         if(onEndReadListener != null) {

@@ -8,15 +8,21 @@ public class FileReader {
     private FileReader() {
     }
 
-    public static ArrayList<String> read(String filename) throws IOException {
+    public static ArrayList<String> read(String filename) {
         ArrayList<String> strings = new ArrayList<>();
+        java.io.FileReader fr = null;
 
-        java.io.FileReader fr = new java.io.FileReader(filename);
-        Scanner scan = new Scanner(fr);
-        while (scan.hasNextLine()) {
-            strings.add(scan.nextLine());
+        try {
+            fr = new java.io.FileReader(filename);
+            Scanner scan = new Scanner(fr);
+            while (scan.hasNextLine()) {
+                strings.add(scan.nextLine());
+            }
+            fr.close();
+        } catch (IOException ex) {
+            throw new FileReaderException("filed read file: " + filename);
         }
-        fr.close();
+
         return strings;
     }
 

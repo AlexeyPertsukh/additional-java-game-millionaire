@@ -4,8 +4,11 @@ import constants.IConst;
 import model_game.Game;
 import model_question.Question;
 import model_question.QuestionFabric;
+import model_question.QuestionFabricException;
 import model_readers_only_java_console.FileReader;
+import model_readers_only_java_console.FileReaderException;
 import model_readers_only_java_console.TcpReader;
+import model_readers_only_java_console.TcpReaderException;
 import view.Color;
 import view.Display;
 
@@ -17,7 +20,7 @@ import java.util.Map;
 
 public class Controller implements IConst {
 
-    private static final String CONSOLE_CONTROLLER_VERSION = "1.2";
+    private static final String CONSOLE_CONTROLLER_VERSION = "1.3";
     private static final String FILE_LOCAL_PATCH = "\\src\\files\\";
 
     private static final int CMD_LOAD_FROM_SERVER = 1;
@@ -43,9 +46,18 @@ public class Controller implements IConst {
 
     public void go() {
         printOnStart();
-        loadQuestions();
-        display.println();
 
+        boolean result = loadQuestions();
+        if(!result) {
+            display.printlRed("\nНе удалось получить список вопросов для игры");
+        } else {
+            gameAction();
+        }
+
+    }
+
+    private void gameAction() {
+        display.println();
         game = new Game(questions, Game.DISABLE_PAUSE);
         game.setOnSelectAnswerListener(this::showSelectAnswer);
         game.setOnSelectNewQuestionListener(this::showNewQuestion);
@@ -53,7 +65,6 @@ public class Controller implements IConst {
         game.setOnEndGameListener(this::endGame);
         game.start();
     }
-
 
     private void showSelectAnswer(String s) {
         //в консольной версии не используется
@@ -120,19 +131,35 @@ public class Controller implements IConst {
         display.resetColor();
     }
 
-    private void loadQuestions(){
+    private boolean loadQuestions(){
         ArrayList<String> strings = new ArrayList<>();
-        String text = String.format("Загрузка вопросов для игры (%d-из сервера, %d-из файла): ", CMD_LOAD_FROM_SERVER, CMD_LOAD_FROM_CSV);
+        String text = String.format("Загрузка вопросов для игры (%d-из сервера, %d-из локального файла): ", CMD_LOAD_FROM_SERVER, CMD_LOAD_FROM_CSV);
         int cmd = Util.nextInt(text, CMD_LOAD_FROM_SERVER, CMD_LOAD_FROM_CSV);
+
+        //получение вопросов в виде списка строк разных типов(csv, json)
         if(cmd == CMD_LOAD_FROM_CSV) {
             strings = loadFromCsv();
-            questions = QuestionFabric.createFromCsv(strings);
-        } else {
+        } else if(cmd == CMD_LOAD_FROM_SERVER){
             strings = loadFromTcp();
-            questions = QuestionFabric.createFromJson(strings);
         }
 
+        if(strings.size() == 0) {
+            return false;
+        }
 
+        //формирование списка вопросов из строк разных типов
+        try {
+            if(cmd == CMD_LOAD_FROM_CSV) {
+                questions = QuestionFabric.createFromCsv(strings);
+            } else {
+                questions = QuestionFabric.createFromJson(strings);
+            }
+        } catch (QuestionFabricException ex) {
+            display.println("failed crete questions list\n" + ex.getMessage());
+            return false;
+        }
+
+        return true;
     }
 
     private ArrayList<String> loadFromCsv() {
@@ -141,17 +168,24 @@ public class Controller implements IConst {
         String fileName = FileReader.getFilenameWithAbsolutePatch(FILE_LOCAL_PATCH, FILE_NAME_CSV_QUESTIONS);
         try {
             strings = FileReader.read(fileName);
-        } catch (IOException e) {
-            e.printStackTrace();
-            display.printlRed("Failed read file: " + fileName);
+            display.println("loaded strings from file *.csv: " + strings.size());
+        } catch (FileReaderException ex) {
+            System.out.println(ex.getMessage());
         }
         return strings;
     }
 
     private ArrayList<String> loadFromTcp() {
+        ArrayList<String> strings = new ArrayList<>();
         TcpReader tcpReader = new TcpReader(HOST ,PORT, TIMEOUT);
-        tcpReader.run();        //здесь не используем TcpReader как поток- в консоли это не имеет смысла, просто вызываем run()
-        return tcpReader.getStrings();
+        try {
+            tcpReader.run();        //здесь не используем TcpReader как поток- в консоли это не имеет смысла, просто вызываем run()
+            strings = tcpReader.getStrings();
+        } catch (TcpReaderException ex) {
+            System.out.println(ex.getMessage());
+        }
+
+        return strings;
     }
 
 
