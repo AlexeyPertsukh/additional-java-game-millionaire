@@ -16,7 +16,7 @@ import java.util.Map;
 
 public class Controller implements IConst {
 
-    private static final String CONSOLE_CONTROLLER_VERSION = "1.3";
+    private static final String CONSOLE_CONTROLLER_VERSION = "1.4";
     private static final String FILE_LOCAL_PATCH = "\\src\\files\\";
 
     private static final int CMD_LOAD_FROM_SERVER = 1;
