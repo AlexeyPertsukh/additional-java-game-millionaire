@@ -4,6 +4,8 @@ import constants.IConst;
 import model_game.Game;
 import model_question.Question;
 import model_question.QuestionFabric;
+import model_readers_only_java_console.FileReader;
+import model_readers_only_java_console.TcpReader;
 import view.Color;
 import view.Display;
 
@@ -29,6 +31,9 @@ public class Controller implements IConst {
 
     private final Display display;
     private final Map<Character, String> map;
+
+    ArrayList<Question> questions;
+
     Game game;
 
     public Controller() {
@@ -38,8 +43,8 @@ public class Controller implements IConst {
 
     public void go() {
         printOnStart();
-        ArrayList<Question> questions = loadQuestions();
-        System.out.println();
+        loadQuestions();
+        display.println();
 
         game = new Game(questions, Game.DISABLE_PAUSE);
         game.setOnSelectAnswerListener(this::showSelectAnswer);
@@ -48,6 +53,7 @@ public class Controller implements IConst {
         game.setOnEndGameListener(this::endGame);
         game.start();
     }
+
 
     private void showSelectAnswer(String s) {
         //в консольной версии не используется
@@ -62,18 +68,24 @@ public class Controller implements IConst {
         display.println();
     }
 
-    private void endGame() {
-        String text = String.format("Игра окончена. Ваш выигрыш: %d %s", game.getWin(), MONEY_SIGN);
-        display.printColor(COLOR_END_GAME, text);
+    private void endGame(Game.Result result) {
+        display.setColor(COLOR_END_GAME);
+
+        display.println("Игра окончена");
+        display.println("Правильные ответы: " + result.getNumAnswerQuestion());
+        String text = String.format("Выигрыш: %d %s", result.getAmount(), MONEY_SIGN);
+        display.println(text);
+
+        display.resetColor();
     }
 
-    private void showNewQuestion(Question question, int bet) {
+    private void showNewQuestion(Question question, Game.Bet bet) {
         List<String> answers = question.getShuffledAllAnswers();
         String addInfo = "";
-        if(Game.checkIrreparableAmount(bet)) {
+        if(bet.isIrreparable()) {
             addInfo = "[несгораемая сумма]";
         }
-        String stringBet = String.format("Вопрос(%d): %d %s %s", game.getNumQuestion(), bet, MONEY_SIGN, addInfo);
+        String stringBet = String.format("Вопрос(%d): %d %s %s", game.getNumQuestion(), bet.getAmount(), MONEY_SIGN, addInfo);
         display.printColor(COLOR_QUESTION, stringBet);
         display.printColor(COLOR_QUESTION, question.getStrQuestion());
         display.println("-----");
@@ -89,7 +101,9 @@ public class Controller implements IConst {
 
         display.println();
 
-        char charAnswer = Util.nextChar("Ваш ответ: ", 'A', 'D');
+        char charMin = 'A';
+        char charMax = (char) (charMin + answers.size() - 1);
+        char charAnswer = Util.nextChar("Ваш ответ: ", charMin, charMax);
         String currentAnswer = map.get(charAnswer);
 
         game.sendAnswer(currentAnswer);
@@ -106,15 +120,19 @@ public class Controller implements IConst {
         display.resetColor();
     }
 
-    private ArrayList<Question> loadQuestions(){
+    private void loadQuestions(){
         ArrayList<String> strings = new ArrayList<>();
         String text = String.format("Загрузка вопросов для игры (%d-из сервера, %d-из файла): ", CMD_LOAD_FROM_SERVER, CMD_LOAD_FROM_CSV);
         int cmd = Util.nextInt(text, CMD_LOAD_FROM_SERVER, CMD_LOAD_FROM_CSV);
         if(cmd == CMD_LOAD_FROM_CSV) {
             strings = loadFromCsv();
+            questions = QuestionFabric.createFromCsv(strings);
+        } else {
+            strings = loadFromTcp();
+            questions = QuestionFabric.createFromJson(strings);
         }
 
-        return QuestionFabric.createFromCsv(strings);
+
     }
 
     private ArrayList<String> loadFromCsv() {
@@ -129,6 +147,13 @@ public class Controller implements IConst {
         }
         return strings;
     }
+
+    private ArrayList<String> loadFromTcp() {
+        TcpReader tcpReader = new TcpReader(HOST ,PORT, TIMEOUT);
+        tcpReader.run();        //здесь не используем TcpReader как поток- в консоли это не имеет смысла, просто вызываем run()
+        return tcpReader.getStrings();
+    }
+
 
 
 

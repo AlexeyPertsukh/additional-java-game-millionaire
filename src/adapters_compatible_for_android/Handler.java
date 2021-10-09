@@ -16,7 +16,7 @@ public class Handler {
             }
         };
 
-        timer.schedule( timerTask, period );
+        timer.schedule(timerTask, period);
     }
 
     public interface ISimple {

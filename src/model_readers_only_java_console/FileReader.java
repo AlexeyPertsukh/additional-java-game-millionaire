@@ -1,4 +1,4 @@
-package com.controller;
+package model_readers_only_java_console;
 
 import java.io.*;
 import java.util.ArrayList;
