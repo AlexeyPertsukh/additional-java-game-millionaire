@@ -58,8 +58,9 @@ public class TcpReader implements IConst {
     }
 
     private void readServer() throws IOException, ClassNotFoundException {
-        ObjectInputStream objectInput = new ObjectInputStream(socket.getInputStream());
-        strings = (ArrayList<String>)objectInput.readObject();
+        ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+        strings = (ArrayList<String>)in.readObject();
+        in.close();
     }
 
     public ArrayList<String> getStrings() {

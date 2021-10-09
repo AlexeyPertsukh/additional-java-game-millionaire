@@ -27,13 +27,16 @@ public class Controller implements IConst {
     private static final String COLOR_END_GAME = Color.ANSI_GREEN;
     private static final String COLOR_CORRECT_ANSWER = Color.ANSI_CYAN;
     private static final String COLOR_FAILED_ANSWER = Color.ANSI_RED;
+    private static final int TYPE_NORM = 1;
+    private static final int TYPE_TEST = 2;
 
     private final Display display;
     private final Map<Character, String> map;
 
-    ArrayList<Question> questions;
+    private ArrayList<Question> questions;
+    private Game game;
+    private int gameType;
 
-    Game game;
 
     public Controller() {
         display = Display.getInstance();
@@ -53,6 +56,8 @@ public class Controller implements IConst {
 
     private void gameAction() {
         display.println();
+        inputType();
+        display.println();
         game = new Game(questions, Game.DISABLE_PAUSE);
         game.setOnSelectAnswerListener(this::showSelectAnswer);
         game.setOnSelectNewQuestionListener(this::showNewQuestion);
@@ -63,6 +68,11 @@ public class Controller implements IConst {
 
     private void showSelectAnswer(String s) {
         //в консольной версии не используется
+    }
+
+    private void inputType() {
+        String text = String.format("Тип игры (%d-обычный, %d-показывать правильный ответ): ", TYPE_NORM, TYPE_TEST);
+        gameType = Util.nextInt(text, TYPE_NORM, TYPE_TEST);
     }
 
     private void showResult(String selectedAnswer, String correctAnswer) {
@@ -100,9 +110,12 @@ public class Controller implements IConst {
         map.clear();
         for (String answer : answers) {
             String text = String.format("%c. %s", letter, answer);
+            if(gameType == TYPE_TEST && question.checkCorrectAnswer(answer)) {
+                text += " <<";
+            }
+            display.println(text);
             map.put(letter, answer);
             letter++;
-            display.println(text);
         }
 
         display.println();
