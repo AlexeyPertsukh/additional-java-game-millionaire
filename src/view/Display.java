@@ -42,27 +42,27 @@ public class Display {
         System.out.println();
     }
 
-    public void printlGreen(String text) {
+    public void printlnGreen(String text) {
         printColor(Color.ANSI_GREEN, text);
     }
 
-    public void printlRed(String text) {
+    public void printlnRed(String text) {
         printColor(Color.ANSI_RED, text);
     }
 
-    public void printlBlue(String text) {
+    public void printlnBlue(String text) {
         printColor(Color.ANSI_BLUE, text);
     }
 
-    public void printlYellow(String text) {
+    public void printlnYellow(String text) {
         printColor(Color.ANSI_YELLOW, text);
     }
 
-    public void printlCyan(String text) {
+    public void printlnCyan(String text) {
         printColor(Color.ANSI_CYAN, text);
     }
 
-    public void printlPurple(String text) {
+    public void printlnPurple(String text) {
         printColor(Color.ANSI_PURPLE, text);
     }
 

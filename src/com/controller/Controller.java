@@ -48,7 +48,7 @@ public class Controller implements IConst {
 
         boolean result = loadQuestions();
         if(!result) {
-            display.printlRed("\nНе удалось получить список вопросов для игры");
+            display.printlnRed("\nНе удалось получить список вопросов для игры");
         } else {
             gameAction();
         }
@@ -88,6 +88,9 @@ public class Controller implements IConst {
         display.setColor(COLOR_END_GAME);
 
         display.println("Игра окончена");
+        if(result.isFullWin()) {
+            display.println("⚑⚑⚑ \nПоздравляем!!! \nВы ответили на все вопросы и стали абсолютным победителем. \n⚑⚑⚑");
+        }
         display.println("Правильные ответы: " + result.getNumAnswerQuestion());
         String text = String.format("Выигрыш: %d %s", result.getAmount(), MONEY_SIGN);
         display.println(text);
