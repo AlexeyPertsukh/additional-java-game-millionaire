@@ -219,7 +219,7 @@ public class Game implements Serializable {
         public boolean isIrreparable() {
             return isIrreparable;
         }
-        
+
 
         public static int size() {
             return Bet.values().length;
