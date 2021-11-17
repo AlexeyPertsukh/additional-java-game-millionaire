@@ -1,58 +1,32 @@
 package model_game;
 
-import adapters_compatible_for_android.Handler;
 import model_question.Question;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Game implements Serializable {
-    public final static boolean ENABLE_PAUSE = true;
-    public final static boolean DISABLE_PAUSE = false;
-
-    public final static boolean SIMPLE_BET = false;
-    public final static boolean IRREPARABLE_BET = true;
 
     private final static String MESSAGE_NO_QUESTIONS = "Нет вопросов для игры";
-    private static final int DELAY_INTRIGUE = 3_000;
-    private static final int DELAY_AFTER_QUESTION_RESULT = 3_000;
 
     private final ArrayList<Question> allQuestions;
     private ArrayList<Question> actualQuestions;
     private Question currentQuestion;
-    private final Round round;
 
-    private OnReportQuestionResultListener onReportResultListener;
-    private OnSelectNewQuestionListener onSelectNewQuestionListener;
-    private OnSelectAnswerListener onSelectAnswerListener;
-    private OnEndGameListener onEndGameListener;
+    private final List<Round> rounds;
+    int step;
 
-    private final State state;
-
-    private String currentAnswer;
-
-    private boolean isAnswerExecute;
-    private final Result result;
-
-    public Game(ArrayList<Question> allQuestions, boolean enablePause) {
+    public Game(ArrayList<Question> allQuestions) {
         this.allQuestions = allQuestions;
-        state = getState(enablePause);
-        result = new Result();
-        round = new Round();
+        rounds = new ArrayList<>();
+        reset();
     }
 
     public void reset() {
         createActualQuestions();
-        round.reset();
-        result.reset();
-    }
-
-    private State getState(boolean enablePause) {
-        if(enablePause) {
-            return new StateEnabledPause();
-        } else {
-            return new StateDisabledPause();
-        }
+        rounds.clear();
+        step = -1;
     }
 
     private void createActualQuestions() {
@@ -63,130 +37,124 @@ public class Game implements Serializable {
         return actualQuestions.size();
     }
 
-    public int getNumQuestion() {
-        return round.getStep() + 1;
-    }
-
-    public Result getResult() {
-        return result;
-    }
-
-    private void putResult() {
-        result.put(round.getBet(), round.getStep() + 1);
-    }
-
     public void start() {
         reset();
         nextQuestion();
     }
 
-    private void wrongAnswer() {
-        if (onEndGameListener != null) {
-            onEndGameListener.onEndGame(result);
+    public void nextQuestion() {
+        if (isEnd()) {
+            return;
         }
-    }
 
-    private void nextQuestion() {
-        isAnswerExecute = false;
         if (actualQuestions.size() == 0) {
             throw new GameException(MESSAGE_NO_QUESTIONS);
         }
 
-        round.inc();
-        if (isEnd()) {
-            result.setFullWin();
-            if (onEndGameListener != null) {
-                onEndGameListener.onEndGame(result);
-            }
+        step++;
 
-        } else {
-            int num = random(actualQuestions.size());
-            currentQuestion = actualQuestions.remove(num);
-            if (onSelectNewQuestionListener != null) {
-                onSelectNewQuestionListener.onSelectNewQuestion(currentQuestion, round.getBet());
-            }
-
-        }
+        int num = random(actualQuestions.size());
+        currentQuestion = actualQuestions.remove(num);
     }
 
-    public boolean checkCorrectAnswer(String answer) {
-        return currentQuestion.checkCorrectAnswer(answer);
+    public Question getCurrentQuestion() {
+        return currentQuestion;
+    }
+
+    public int getNumQuestion() {
+        return step + 1;
     }
 
     public void sendAnswer(String selectedAnswer) {
-        if (isAnswerExecute || isEnd()) {
+        if (isEnd()) {
             return;
         }
-        isAnswerExecute = true;
-        currentAnswer = selectedAnswer;
-        state.sendAnswer(currentAnswer);
-    }
-
-    private void pauseAfterQuestionResult() {
-        state.pauseAfterQuestionResult();
+        rounds.add(new Round(currentQuestion, selectedAnswer, getBet()));
     }
 
     public boolean isEnd() {
-        return round.isEnd();
+        if (rounds.size() == 0) {
+            return false;
+        }
+
+        Round lastRound = getLastRound();
+        return !lastRound.isWin() || step == Bet.size();
     }
 
-    public void setOnSelectAnswerListener(OnSelectAnswerListener onSelectAnswerListener) {
-        this.onSelectAnswerListener = onSelectAnswerListener;
+    public boolean isWin() {
+        Round lastRound = getLastRound();
+        return lastRound.isWin();
     }
 
-    public void setOnReportQuestionResultListener(OnReportQuestionResultListener onReportResultListener) {
-        this.onReportResultListener = onReportResultListener;
+    public int getNumCorrectAnswers() {
+        for (int i = rounds.size() - 1; i >= 0 ; i--) {
+            Round round = rounds.get(i);
+            if(round.isWin()) {
+                return i + 1;
+            }
+        }
+        return 0;
     }
 
-    public void setOnSelectNewQuestionListener(OnSelectNewQuestionListener onSelectNewQuestionListener) {
-        this.onSelectNewQuestionListener = onSelectNewQuestionListener;
+    public int getAmount() {
+        for (int i = rounds.size() - 1; i >= 0 ; i--) {
+            Round round = rounds.get(i);
+            if(round.isWin() && round.getBet().isIrreparable()) {
+                return round.getBet().getAmount();
+            }
+        }
+        return 0;
     }
 
-    public void setOnEndGameListener(OnEndGameListener onEndGameListener) {
-        this.onEndGameListener = onEndGameListener;
+    private Round getLastRound() {
+        return rounds.get(rounds.size() - 1);
+    }
+
+    public Question getLastQuestion() {
+        return getLastRound().getQuestion();
+    }
+
+    public Bet getBet() {
+        return Bet.get(step);
     }
 
     int random(int max) {
         return (int) (Math.random() * max);
     }
 
-    //ВЫИГРЫШ
-    public static class Result implements Serializable {
-        private int amount;
-        private int numAnswerQuestion;
-        private boolean isFullWin;
+     //роунд
+     public static class Round {
+         private final Question question;
+         private final String playerAnswer;
+         private final Bet bet;
 
-        public void reset() {
-            amount = 0;
-            numAnswerQuestion = 0;
-            isFullWin = false;
-        }
+         public Round(Question question, String playerAnswer, Bet bet) {
+             this.question = question;
+             this.playerAnswer = playerAnswer;
+             this.bet = bet;
+         }
 
-        public void put(Bet bet, int numAnswerQuestion) {
-            this.numAnswerQuestion = numAnswerQuestion;
-            if(bet.isIrreparable()) {
-                amount = bet.getAmount();
-            }
-        }
+         public Question getQuestion() {
+             return question;
+         }
 
-        public int getAmount() {
-            return amount;
-        }
+         public String getPlayerAnswer() {
+             return playerAnswer;
+         }
 
-        public int getNumAnswerQuestion() {
-            return numAnswerQuestion;
-        }
+         public Bet getBet() {
+             return bet;
+         }
 
-        public boolean isFullWin() {
-            return isFullWin;
-        }
-
-        public void setFullWin() {
-            isFullWin = true;
-        }
-    }
+         public boolean isWin() {
+             return question.checkCorrectAnswer(playerAnswer);
+         }
+     }
 
     //СТАВКА
+    public final static boolean SIMPLE_BET = false;
+    public final static boolean IRREPARABLE_BET = true;
+
     public enum Bet {
         BET1(100, SIMPLE_BET),
         BET2(200, SIMPLE_BET),
@@ -229,117 +197,6 @@ public class Game implements Serializable {
             Bet[] bets = Bet.values();
             return bets[num];
         }
-
     }
 
-    //РАУНД
-    private static class Round implements Serializable {
-        private int step;
-
-        public Round() {
-        }
-
-        public void reset() {
-            step = -1;
-        }
-
-        public void inc() {
-            if (!isEnd()) {
-                step++;
-            }
-        }
-
-        public boolean isEnd() {
-            return step >= (Bet.size());
-        }
-
-        public Bet getBet() {
-            return Bet.get(step);
-        }
-
-        public int getStep() {
-            return step;
-        }
-
-    }
-
-    //Слушатели
-    @FunctionalInterface
-    public interface OnReportQuestionResultListener {
-        void onReportQuestionResult(String selectedAnswer, String correctAnswer);
-    }
-
-    @FunctionalInterface
-    public interface OnSelectAnswerListener {
-        void onSelectAnswer(String selectedAnswer);
-    }
-
-    @FunctionalInterface
-    public interface OnSelectNewQuestionListener {
-        void onSelectNewQuestion(Question question, Bet bet);
-    }
-
-    @FunctionalInterface
-    public interface OnEndGameListener {
-        void onEndGame(Result result);
-    }
-
-    //State - состояние в зависимости от вкл/откл паузы
-    public abstract static class State {
-        public abstract void sendAnswer(String selectedAnswer);
-        public abstract void pauseAfterQuestionResult();
-    }
-
-    public class StateEnabledPause extends State {
-        @Override
-        public void sendAnswer(String selectedAnswer) {
-            if(onSelectAnswerListener != null) {
-                onSelectAnswerListener.onSelectAnswer(selectedAnswer);
-            }
-
-            Handler handler = new Handler();
-            handler.postDelayed(() -> {
-                if (onReportResultListener != null) {
-                    onReportResultListener.onReportQuestionResult(selectedAnswer, currentQuestion.getCorrectAnswer());
-                }
-                pauseAfterQuestionResult();
-            }, DELAY_INTRIGUE);
-        }
-
-        @Override
-        public void pauseAfterQuestionResult() {
-            Handler handler = new Handler();
-            if (checkCorrectAnswer(currentAnswer)) {
-                putResult();
-                handler.postDelayed(Game.this::nextQuestion, DELAY_AFTER_QUESTION_RESULT);
-            } else {
-                handler.postDelayed(Game.this::wrongAnswer, DELAY_AFTER_QUESTION_RESULT);
-            }
-        }
-    }
-
-    public class StateDisabledPause extends State {
-        @Override
-        public void sendAnswer(String selectedAnswer) {
-            if (onSelectAnswerListener != null) {
-                onSelectAnswerListener.onSelectAnswer(selectedAnswer);
-            }
-
-            if (onReportResultListener != null) {
-                onReportResultListener.onReportQuestionResult(selectedAnswer, currentQuestion.getCorrectAnswer());
-            }
-            pauseAfterQuestionResult();
-
-        }
-
-        @Override
-        public void pauseAfterQuestionResult() {
-            if (checkCorrectAnswer(currentAnswer)) {
-                putResult();
-                nextQuestion();
-            } else {
-                wrongAnswer();
-            }
-        }
-    }
 }

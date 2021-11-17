@@ -8,9 +8,9 @@ https://github.com/AlexeyPertsukh/hw32-java-server-questions-game-millionaire
 
 https://github.com/AlexeyPertsukh/hw32-android-game-millionaire
 
-• Compatible packages (except for import strings, for example: "import android.os.Handler") of the console version of the game and the version for android:
+• Compatible packages of the console version of the game and the version for android:
 
-model_game, model_questions, constants
+model_questions
 
 ![alt text](screenshot1_game.jpg)
 

@@ -10,7 +10,7 @@ public class FileReader {
 
     public static ArrayList<String> read(String filename) {
         ArrayList<String> strings = new ArrayList<>();
-
+        System.out.println(filename);
         try {
             java.io.FileReader fr = new java.io.FileReader(filename);
             Scanner scan = new Scanner(fr);

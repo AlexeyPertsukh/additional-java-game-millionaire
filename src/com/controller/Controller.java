@@ -37,6 +37,8 @@ public class Controller implements IConst {
     private Game game;
     private int gameType;
 
+    List<String> answers;
+    String currentAnswer;
 
     public Controller() {
         display = Display.getInstance();
@@ -47,66 +49,78 @@ public class Controller implements IConst {
         printOnStart();
 
         boolean result = loadQuestions();
-        if(!result) {
-            display.printlnRed("\nНе удалось получить список вопросов для игры");
-        } else {
-            gameAction();
+        if (!result) {
+            display.println();
+            display.printlnRed("Не удалось получить список вопросов для игры");
+            return;
         }
-    }
 
-    private void gameAction() {
-        display.println();
         inputType();
-        display.println();
-        game = new Game(questions, Game.DISABLE_PAUSE);
-        game.setOnSelectAnswerListener(this::showSelectAnswer);
-        game.setOnSelectNewQuestionListener(this::showNewQuestion);
-        game.setOnReportQuestionResultListener(this::showResult);
-        game.setOnEndGameListener(this::endGame);
+        game = new Game(questions);
         game.start();
-    }
 
-    private void showSelectAnswer(String s) {
-        //в консольной версии не используется
+        while (!game.isEnd()) {
+            printQuestion();
+            inputAnswer();
+            sendAnswer();
+            printRoundResult();
+            if(!game.isEnd()) {
+                game.nextQuestion();
+            }
+        }
+        display.println();
+        printGameResult();
     }
 
     private void inputType() {
+        display.println();
         String text = String.format("Тип игры (%d-обычный, %d-показывать правильный ответ): ", TYPE_NORM, TYPE_TEST);
         gameType = Util.nextInt(text, TYPE_NORM, TYPE_TEST);
-    }
-
-    private void showResult(String selectedAnswer, String correctAnswer) {
-        if(selectedAnswer.equalsIgnoreCase(correctAnswer)) {
-            display.printColor(COLOR_CORRECT_ANSWER, "Это правильный ответ!");
-        } else {
-            display.printColor(COLOR_FAILED_ANSWER, "Это неправильный ответ... \nПравильный ответ: " + correctAnswer);
-        }
         display.println();
     }
 
-    private void endGame(Game.Result result) {
+    private void printRoundResult() {
+        if (game.isWin()) {
+            display.printlnColor(COLOR_CORRECT_ANSWER, "Это правильный ответ!");
+            display.println();
+        } else {
+            Question lastQuestion = game.getLastQuestion();
+            display.printlnColor(COLOR_FAILED_ANSWER, "Это неправильный ответ...");
+            display.printlnColor(COLOR_FAILED_ANSWER, "Правильный ответ: " + lastQuestion.getCorrectAnswer());
+        }
+    }
+
+    private void printGameResult() {
         display.setColor(COLOR_END_GAME);
 
         display.println("Игра окончена");
-        if(result.isFullWin()) {
-            display.println("⚑⚑⚑ \nПоздравляем!!! \nВы ответили на все вопросы и стали абсолютным победителем. \n⚑⚑⚑");
+
+        if(game.isWin()) {
+            display.println("⚑⚑⚑");
+            display.println("Поздравляем!!!");
+            display.println("Вы ответили на все вопросы и стали абсолютным победителем.");
+            display.println("⚑⚑⚑");
+        } else {
+            display.println("Вы НЕ ответили на все вопросы.");
         }
-        display.println("Правильные ответы: " + result.getNumAnswerQuestion());
-        String text = String.format("Выигрыш: %d %s", result.getAmount(), MONEY_SIGN);
+        display.println("Правильные ответы: " + game.getNumCorrectAnswers());
+        String text = String.format("Выигрыш: %d %s", game.getAmount(), MONEY_SIGN);
         display.println(text);
 
         display.resetColor();
     }
 
-    private void showNewQuestion(Question question, Game.Bet bet) {
-        List<String> answers = question.getShuffledAllAnswers();
+    private void printQuestion() {
+        Question question = game.getCurrentQuestion();
+        answers = question.getShuffledAllAnswers();
         String addInfo = "";
+        Game.Bet bet = game.getBet();
         if(bet.isIrreparable()) {
             addInfo = "[несгораемая сумма]";
         }
         String stringBet = String.format("Вопрос(%d): %d %s %s", game.getNumQuestion(), bet.getAmount(), MONEY_SIGN, addInfo);
-        display.printColor(COLOR_QUESTION, stringBet);
-        display.printColor(COLOR_QUESTION, question.getStrQuestion());
+        display.printlnColor(COLOR_QUESTION, stringBet);
+        display.printlnColor(COLOR_QUESTION, question.getStrQuestion());
         display.println("-----");
 
         char letter = 'A';
@@ -122,14 +136,20 @@ public class Controller implements IConst {
         }
 
         display.println();
+    }
 
+
+    private void inputAnswer() {
         char charMin = 'A';
         char charMax = (char) (charMin + answers.size() - 1);
         char charAnswer = Util.nextChar("Ваш ответ: ", charMin, charMax);
-        String currentAnswer = map.get(charAnswer);
+        currentAnswer = map.get(charAnswer);
+    }
 
+    private void sendAnswer() {
         game.sendAnswer(currentAnswer);
     }
+
 
     private void printOnStart() {
         display.setColor(COLOR_HELP);

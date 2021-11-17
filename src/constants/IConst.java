@@ -1,7 +1,7 @@
 package constants;
 
 public interface IConst {
-    String HOST = "192.168.0.100";
+    String HOST = "192.168.0.103";
     int PORT = 6789;
     int TIMEOUT = 3000;
     String QUERY = "select *";
