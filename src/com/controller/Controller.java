@@ -104,7 +104,7 @@ public class Controller implements IConst {
             display.println("Вы НЕ ответили на все вопросы.");
         }
         display.println("Правильные ответы: " + game.getNumCorrectAnswers());
-        String text = String.format("Выигрыш: %d %s", game.getAmount(), MONEY_SIGN);
+        String text = String.format("Выигрыш: %d %s", game.getWinningAmount(), MONEY_SIGN);
         display.println(text);
 
         display.resetColor();

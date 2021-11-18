@@ -10,12 +10,12 @@ public class Game implements Serializable {
 
     private final static String MESSAGE_NO_QUESTIONS = "Нет вопросов для игры";
 
-    private final ArrayList<Question> allQuestions;
-    private ArrayList<Question> actualQuestions;
-    private Question currentQuestion;
+    protected final ArrayList<Question> allQuestions;
+    protected ArrayList<Question> actualQuestions;
+    protected Question currentQuestion;
 
-    private final List<Round> rounds;
-    int step;
+    protected final List<Round> rounds;
+    protected int step;
 
     public Game(ArrayList<Question> allQuestions) {
         this.allQuestions = allQuestions;
@@ -96,7 +96,7 @@ public class Game implements Serializable {
         return 0;
     }
 
-    public int getAmount() {
+    public int getWinningAmount() {
         for (int i = rounds.size() - 1; i >= 0 ; i--) {
             Round round = rounds.get(i);
             if(round.isWin() && round.getBet().isIrreparable()) {
@@ -122,38 +122,38 @@ public class Game implements Serializable {
         return (int) (Math.random() * max);
     }
 
-     //роунд
-     public static class Round {
-         private final Question question;
-         private final String playerAnswer;
-         private final Bet bet;
+    //роунд
+    public static class Round implements Serializable {
+        private final Question question;
+        private final String playerAnswer;
+        private final Bet bet;
 
-         public Round(Question question, String playerAnswer, Bet bet) {
-             this.question = question;
-             this.playerAnswer = playerAnswer;
-             this.bet = bet;
-         }
+        public Round(Question question, String playerAnswer, Bet bet) {
+            this.question = question;
+            this.playerAnswer = playerAnswer;
+            this.bet = bet;
+        }
 
-         public Question getQuestion() {
-             return question;
-         }
+        public Question getQuestion() {
+            return question;
+        }
 
-         public String getPlayerAnswer() {
-             return playerAnswer;
-         }
+        public String getPlayerAnswer() {
+            return playerAnswer;
+        }
 
-         public Bet getBet() {
-             return bet;
-         }
+        public Bet getBet() {
+            return bet;
+        }
 
-         public boolean isWin() {
-             return question.checkCorrectAnswer(playerAnswer);
-         }
-     }
+        public boolean isWin() {
+            return question.checkCorrectAnswer(playerAnswer);
+        }
+    }
 
     //СТАВКА
-    public final static boolean SIMPLE_BET = false;
-    public final static boolean IRREPARABLE_BET = true;
+    protected final static boolean SIMPLE_BET = false;
+    protected final static boolean IRREPARABLE_BET = true;
 
     public enum Bet {
         BET1(100, SIMPLE_BET),
@@ -198,5 +198,4 @@ public class Game implements Serializable {
             return bets[num];
         }
     }
-
 }
